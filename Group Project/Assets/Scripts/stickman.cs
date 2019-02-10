@@ -29,6 +29,11 @@ public class stickman : MonoBehaviour
     public GameObject minimapIcon;
     public GameObject trail;
     public GameObject glow;
+    public string jAxis;
+    public string eAxis;
+    public string fAxis;
+    public string vAxis;
+    public string tAxis;
 
     private bool lastControls;
     private int wallJumpNum = 0;
@@ -38,11 +43,6 @@ public class stickman : MonoBehaviour
     private GameObject other;
     private bool singleFire = false;
     private bool ended = false;
-    private string jAxis;
-    private string eAxis;
-    private string fAxis;
-    private string vAxis;
-    private string tAxis;
     private float health;
     private bool damaged = false;
     private GameObject particleParent;
@@ -394,6 +394,10 @@ public class stickman : MonoBehaviour
                 {
                     singleFire = true;
                 }
+
+                // Set pickups info
+                item.GetComponent<PickupController>().isEquipped = true;
+                item.GetComponent<PickupController>().player = this.gameObject;
             }
             hit = false;
         }
@@ -416,15 +420,20 @@ public class stickman : MonoBehaviour
         dropped.gameObject.transform.localScale = new Vector3(s, dropped.gameObject.transform.localScale.y, dropped.gameObject.transform.localScale.z);
         dropped.parent = GameControl.instance.pickups.transform;
         dropped.transform.GetChild(1).GetChild(0).gameObject.SetActive(true);
-        if (dropped.name.Contains("Flashlight"))
+        if(dropped.name.Contains("Flashlight"))
         {
             dropped.transform.GetChild(0).GetChild(0).GetChild(0).gameObject.SetActive(false);
+            dropped.GetComponent<Rigidbody2D>().gravityScale = 5;
+        }
+        else if(dropped.name.Contains("Grapple"))
+        {
             dropped.GetComponent<Rigidbody2D>().gravityScale = 5;
         }
         else
         {
             dropped.transform.GetChild(0).GetChild(1).gameObject.GetComponent<ParticleSystem>().Stop();
         }
+        dropped.GetComponent<PickupController>().isEquipped = false;
         return dropped;
     }
 
@@ -650,6 +659,10 @@ public class stickman : MonoBehaviour
             return;
         }
         if (equip.transform.GetChild(0).name.Contains("Flashlight"))
+        {
+            return;
+        }
+        if (equip.transform.GetChild(0).name.Contains("Grapple"))
         {
             return;
         }
