@@ -107,6 +107,9 @@ public class stickman : MonoBehaviour
         checkSlide();
         //most movement logic for the player
         movePlayer();
+        float h = Input.GetAxis(hAxis);
+        anim.SetBool("Running", Mathf.Abs(rb2d.velocity.x) > 0 && ableToJump);
+        anim.speed = Mathf.Abs(rb2d.velocity.x) / 20;
         //checks if the player is attempting to pick up/drop weapon
         checkPickup();
         //checks if the player is throwing a weapon
@@ -137,8 +140,6 @@ public class stickman : MonoBehaviour
             rb2d.velocity = new Vector2(rb2d.velocity.x, GameControl.instance.maxPlayerSpeed);
         }
         playerCanvas.transform.localScale = transform.localScale;
-        float h = Input.GetAxis(hAxis);
-        anim.SetBool("Running", Mathf.Abs(h) > 0 && ableToJump);
         respawn();
     }
 
@@ -287,6 +288,7 @@ public class stickman : MonoBehaviour
         {
             bool v = Input.GetButtonDown(jAxis);
             float h = Input.GetAxis(hAxis);
+            Vector2 dist = getDistanceToWall();
             if(rb2d.velocity.y <= 0 && wallJumping)
             {
                 wallJumping = false;
@@ -319,7 +321,17 @@ public class stickman : MonoBehaviour
                         rb2d.gravityScale = 8;
                     }
                 }
-                rb2d.velocity = new Vector2(h * playerSpeed, rb2d.velocity.y);
+                if (sliding)
+                {
+                    if ((dist.x >= 1 && h < 0) || (dist.y >= 1 && h > 0))
+                    {
+                        rb2d.velocity = new Vector2(h * playerSpeed, rb2d.velocity.y);
+                    }
+                }
+                else
+                {
+                    rb2d.velocity = new Vector2(h * playerSpeed, rb2d.velocity.y);
+                }
                 if (h != 0)
                 {
                     transform.localScale = new Vector3(Mathf.Sign(h), transform.localScale.y, transform.localScale.z);
@@ -424,6 +436,14 @@ public class stickman : MonoBehaviour
                         }
                     }
                 }
+                else
+                {
+                    ParticleSystem ps = item.transform.GetChild(0).GetChild(1).gameObject.GetComponent<ParticleSystem>();
+                    if (ps.isPlaying)
+                    {
+                        ps.Stop();
+                    }
+                }
             }
             hit = false;
         }
@@ -444,7 +464,6 @@ public class stickman : MonoBehaviour
             s = 1;
         }
         dropped.gameObject.transform.localScale = new Vector3(s, dropped.gameObject.transform.localScale.y, dropped.gameObject.transform.localScale.z);
-        dropped.parent = GameControl.instance.pickups.transform;
         dropped.transform.GetChild(1).GetChild(0).gameObject.SetActive(true);
         if (dropped.name.Contains("Flashlight"))
         {
@@ -454,7 +473,9 @@ public class stickman : MonoBehaviour
         else
         {
             dropped.transform.GetChild(0).GetChild(1).gameObject.GetComponent<ParticleSystem>().Stop();
+            dropped.transform.GetChild(0).GetChild(1).gameObject.GetComponent<AudioSource>().Stop();
         }
+        dropped.parent = GameControl.instance.pickups.transform;
         return dropped;
     }
 
@@ -700,11 +721,16 @@ public class stickman : MonoBehaviour
         GameObject projectile = equip.transform.GetChild(0).gameObject; 
         projectile = equip.transform.GetChild(0).transform.GetChild(0).GetChild(1).gameObject;
         ParticleSystem ps = projectile.GetComponent<ParticleSystem>();
+        AudioSource sound = ps.gameObject.GetComponent<AudioSource>();
         if (firing)
         {
             if (!ps.isEmitting)
             {
                 ps.Play();
+                if(sound != null)
+                {
+                    sound.Play();
+                }
             }
         }
         else
@@ -712,6 +738,10 @@ public class stickman : MonoBehaviour
             if (ps.isEmitting)
             {
                 ps.Stop();
+                if(sound != null)
+                {
+                    sound.Stop();
+                }
             }
         }
     }
