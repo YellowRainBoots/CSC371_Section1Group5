@@ -51,6 +51,7 @@ public class stickman : MonoBehaviour
     private GameObject environmentalDamage;
     private float gameEndDelay = 3f;
     private Animator anim;
+    private bool sliding = false;
 
     private bool DEBUG = false;
 
@@ -102,6 +103,8 @@ public class stickman : MonoBehaviour
     {
         //checks if controls are enabled or not
         resetControls();
+
+        checkSlide();
         //most movement logic for the player
         movePlayer();
         //checks if the player is attempting to pick up/drop weapon
@@ -186,10 +189,6 @@ public class stickman : MonoBehaviour
                 wallJumping = false;
                 wallJumpNum = 0;
             }
-            else
-            {
-                rb2d.gravityScale = 12;
-            }
         }
     }
 
@@ -209,7 +208,6 @@ public class stickman : MonoBehaviour
                     ableToJump = false;
                 }
             }
-            rb2d.gravityScale = 8;
         }
         if (collision.gameObject.CompareTag("Player"))
         {
@@ -307,6 +305,18 @@ public class stickman : MonoBehaviour
                             r.velocity = new Vector2(r.velocity.x, -jumpStrength);
                         }
                         footstool = false;
+                    }
+                }
+                else
+                {
+                    if (sliding)
+                    {
+                        rb2d.gravityScale = 0;
+                        rb2d.velocity = new Vector2(0, -5);
+                    }
+                    else
+                    {
+                        rb2d.gravityScale = 8;
                     }
                 }
                 rb2d.velocity = new Vector2(h * playerSpeed, rb2d.velocity.y);
@@ -536,6 +546,19 @@ public class stickman : MonoBehaviour
         }
     }
 
+    public void checkSlide()
+    {
+        Vector2 walls = getDistanceToWall();
+        if(walls.x < 1 || walls.y < 1)
+        {
+            sliding = true;
+        }
+        else
+        {
+            sliding = false;
+        }
+    }
+
     public void wallJump()
     {
         Vector2 walls = getDistanceToWall();
@@ -543,6 +566,7 @@ public class stickman : MonoBehaviour
         {
             float h = Input.GetAxis(hAxis);
             float scale = 2;
+            rb2d.gravityScale = 8;
             if (walls.x < 1)
             {
                 wallJumpNum++;
