@@ -29,6 +29,7 @@ public class stickman : MonoBehaviour
     public GameObject minimapIcon;
     public GameObject trail;
     public GameObject glow;
+    public AudioSource thud;
 
     private bool lastControls;
     private int wallJumpNum = 0;
@@ -58,7 +59,7 @@ public class stickman : MonoBehaviour
         if (DEBUG)
         {
             Debug.Log("There are no controllers detected, switching to keyboard mode.");
-            if (playerNum == 1)
+            if (true)
             {
                 hAxis = "Horizontal";
                 vAxis = "Vertical";
@@ -146,6 +147,7 @@ public class stickman : MonoBehaviour
             wallJumping = false;
             wallJumpNum = 0;
             shaker.SetActive(true);
+            thud.Play();
         }
         if (collision.gameObject.CompareTag("Wall"))
         {
@@ -184,6 +186,10 @@ public class stickman : MonoBehaviour
                 wallJumping = false;
                 wallJumpNum = 0;
             }
+            else
+            {
+                rb2d.gravityScale = 12;
+            }
         }
     }
 
@@ -193,13 +199,17 @@ public class stickman : MonoBehaviour
         {
             ableToJump = false;
         }
-        if (collision.gameObject.CompareTag("Wall") && rb2d.velocity.y == 0)
+        if (collision.gameObject.CompareTag("Wall"))
         {
-            Vector2 dist = getDistanceToWall();
-            if (dist.x >= 1 && dist.y >= 1)
+            if (rb2d.velocity.y == 0)
             {
-                ableToJump = false;
+                Vector2 dist = getDistanceToWall();
+                if (dist.x >= 1 && dist.y >= 1)
+                {
+                    ableToJump = false;
+                }
             }
+            rb2d.gravityScale = 8;
         }
         if (collision.gameObject.CompareTag("Player"))
         {
@@ -211,6 +221,7 @@ public class stickman : MonoBehaviour
             }
             else
             {
+                thud.Play();
                 ableToJump = true;
             }
         }
@@ -393,6 +404,15 @@ public class stickman : MonoBehaviour
                 if (item.name.Contains("Flashlight"))
                 {
                     singleFire = true;
+                    if(hit)
+                    {
+                        health -= 30;
+                        healthBar.value = health;
+                        if(health <= 0)
+                        {
+                            dead = true;
+                        }
+                    }
                 }
             }
             hit = false;
@@ -600,7 +620,7 @@ public class stickman : MonoBehaviour
 
     private void fireWeapon()
     {
-        if (dead || controlsDisabled)
+        if (dead || controlsDisabled || equip.transform.childCount == 0)
         {
             return;
         }
@@ -616,7 +636,7 @@ public class stickman : MonoBehaviour
         {
             firing = false;
         }
-        if (singleFire)
+        if (singleFire && equip.transform.childCount == 1 && equip.transform.GetChild(0).name.Contains("Flashlight"))
         {
             fireOnce();
         }
